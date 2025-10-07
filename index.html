@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pametni parking sistem</title>
+<style>
+  body { 
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #0a192f, #1e3c72);
+    color: white;
+    text-align: center;
+    padding: 30px;
+  }
+  h1 {
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
+  .spot {
+    display: inline-block;
+    width: 150px;
+    height: 150px;
+    margin: 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 20px;
+    line-height: 150px;
+    color: white;
+    box-shadow: 0 0 25px rgba(0,0,0,0.3);
+    transition: background 0.4s;
+  }
+  .green { background: #2ECC40; } /* slobodno */
+  .red { background: #FF4136; }   /* zauzeto */
+  .info {
+    margin-top: 30px;
+    font-size: 16px;
+  }
+  .field {
+    background: rgba(255,255,255,0.1);
+    padding: 10px 20px;
+    margin: 5px auto;
+    border-radius: 10px;
+    width: fit-content;
+  }
+</style>
+</head>
+<body>
+  <h1>📡 Pametni parking sistem</h1>
+
+  <div id="xl" class="spot">XL</div>
+  <div id="l" class="spot">L</div>
+  <div id="n" class="spot">N</div>
+
+  <div class="info">
+    <h2>📊 Trenutni podaci sa senzora</h2>
+    <div id="dist1" class="field">Distanca G1: ...</div>
+    <div id="dist2" class="field">Distanca G2: ...</div>
+    <div id="size" class="field">Veličina vozila: ...</div>
+  </div>
+
+  <script>
+    const channelID = 3103888;
+    const url = `https://api.thingspeak.com/channels/${channelID}/feeds/last.json`;
+
+    async function updateParking() {
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Učitavanje podataka sa kanala
+        const distG1 = data.field1;
+        const distG2 = data.field2;
+        const velicina = data.field3;
+        const xlStatus = data.field4;
+        const lStatus = data.field5;
+        const nStatus = data.field6;
+
+        // Osvežavanje prikaza senzorskih vrednosti
+        document.getElementById('dist1').innerText = `Distanca G1: ${distG1} cm`;
+        document.getElementById('dist2').innerText = `Distanca G2: ${distG2} cm`;
+        document.getElementById('size').innerText = `Veličina vozila: ${velicina}`;
+
+        // Promena boje parking mesta
+        document.getElementById('xl').className = 'spot ' + 
+          (xlStatus && xlStatus.toLowerCase().includes("slobodno") ? 'green' : 'red');
+        document.getElementById('l').className = 'spot ' + 
+          (lStatus && lStatus.toLowerCase().includes("slobodno") ? 'green' : 'red');
+        document.getElementById('n').className = 'spot ' + 
+          (nStatus && nStatus.toLowerCase().includes("slobodno") ? 'green' : 'red');
+      } 
+      catch (error) {
+        console.error("Greška pri čitanju podataka:", error);
+      }
+    }
+
+    // Pokreni odmah i osveži svakih 20 sekundi
+    updateParking();
+    setInterval(updateParking, 20000);
+  </script>
+</body>
+</html>
